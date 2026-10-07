@@ -53,3 +53,25 @@ for col in forbidden_keywords:
         print(f"UYARI: Yasaklı bir sütun listede bulundu: {col}")
     else:
         print(f"DOĞRULAMA BAŞARILI: '{col}' sütunu filtrelenip başarıyla atıldı.")
+
+
+# 3. Adım: Eksik Veri (NaN / Null) Kontrolü ve Temizliği
+print("\nEksik veri kontrolü yapılıyor...")
+
+# Her sütunda kaç tane eksik (NaN) değer olduğunu kontrol ediyoruz
+missing_values = df_filtered.isnull().sum()
+print("Sütunlardaki eksik veri sayıları:")
+print(missing_values[missing_values > 0])
+
+# Eğer eksik veri varsa temizleyelim (dropna: eksik satırları veri setinden atar)
+initial_row_count = len(df_filtered)
+df_clean = df_filtered.dropna()
+cleaned_row_count = len(df_clean)
+
+print(f"Temizlik öncesi satır sayısı: {initial_row_count}")
+print(f"Temizlik sonrası satır sayısı: {cleaned_row_count}")
+
+if initial_row_count == cleaned_row_count:
+    print("Harika! Veri setinde hiç eksik (NaN) veri bulunmuyor, satır kaybı yaşanmadı.")
+else:
+    print(f"Dikkat: {initial_row_count - cleaned_row_count} adet eksik verili satır temizlendi.")
