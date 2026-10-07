@@ -75,3 +75,47 @@ if initial_row_count == cleaned_row_count:
     print("Harika! Veri setinde hiç eksik (NaN) veri bulunmuyor, satır kaybı yaşanmadı.")
 else:
     print(f"Dikkat: {initial_row_count - cleaned_row_count} adet eksik verili satır temizlendi.")
+
+from sklearn.model_selection import GroupShuffleSplit
+import urllib.parse
+
+print("\nDomain-Aware Train/Test Bölünmesi (GroupShuffleSplit) hazırlanıyor...")
+
+# 1. URL'lerden domain bilgisini (grup anahtarını) çıkartıyoruz
+# Örn: "http://www.example.com/path" -> "example.com"
+def extract_domain(url):
+    try:
+        parsed_url = urllib.parse.urlparse(str(url))
+        netloc = parsed_url.netloc
+        if not netloc:
+            # Eğer şeması yoksa başına http ekleyip tekrar deneyelim
+            parsed_url = urllib.parse.urlparse("http://" + str(url))
+            netloc = parsed_url.netloc
+        # www. kısmını temizleyip saf domain elde edelim
+        if netloc.startswith("www."):
+            netloc = netloc[4:]
+        return netloc.split(':')[0] # Port numarasını ayıkla
+    except:
+        return "unknown"
+
+# Temizlenmiş veri seti üzerinden domain gruplarını oluşturalım
+df_clean['DomainGroup'] = df_clean['URL'].apply(extract_domain)
+
+# 2. Özellikler (X), Etiket (y) ve Gruplar (groups) olarak ayıralım
+# 'URL' ve 'label' ve 'DomainGroup' sütunlarını X'ten çıkarıyoruz (model sadece sayısal lexical özelliklerle öğrenecek)
+X = df_clean.drop(columns=['URL', 'label', 'DomainGroup'])
+y = df_clean['label']
+groups = df_clean['DomainGroup']
+
+# 3. GroupShuffleSplit ile %80 Train, %20 Test (Domain bazlı sızdırmasız bölme)
+gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+
+train_idx, test_idx = next(gss.split(X, y, groups))
+
+X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+
+print(f"Eğitim (Train) kümesi satır sayısı: {len(X_train)}")
+print(f"Test kümesi satır sayısı: {len(X_test)}")
+print("BAŞARILI: Domain-aware split (gruplu veri bölünmesi) tamamlandı! Hiçbir domain iki tarafa da aynı anda sızmadı.")
+
