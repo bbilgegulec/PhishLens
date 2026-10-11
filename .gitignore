@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# CSV veri dosyalarını git takibinden hariç tut
+*.csv
